@@ -40,6 +40,8 @@ START_SECT_INDEX=$((START_ADDR_INDEX / 512))
 START_SECT_RESV=$((START_ADDR_RESV / 512))
 START_SECT_DATA=$((START_ADDR_DATA / 512))
 
+echo -e "\033[0;31m-> Data Section\033[0m"
+
 idx=0
 file_num=0
 file_list=`ls $path/*.wav`
@@ -84,10 +86,14 @@ do
     idx=$((file_num + 1))
 done
 
+echo -e "\033[0;31m-> Index Section\033[0m"
+
 # index padding
 index_size=`ls -l index.bin | awk '{ print $5 }'`
 padding_size=$((START_ADDR_RESV - START_ADDR_INDEX - index_size))
 dd if=/dev/zero of=index.pad bs=$padding_size count=1
+
+echo -e "\033[0;31m-> Header Section\033[0m"
 
 # header and padding
 total=`ls -l $path/*.wav | wc -l`
@@ -96,8 +102,12 @@ header_size=`ls -l header.bin | awk '{ print $5 }'`
 padding_size=$((START_ADDR_INDEX - START_ADDR_HEADER - header_size))
 dd if=/dev/zero of=header.pad bs=$padding_size count=1
 
+echo -e "\033[0;31m-> Reserved Section\033[0m"
+
 # reserved
 dd if=/dev/zero of=reserved.bin bs=$((START_ADDR_DATA - START_ADDR_RESV)) count=1
+
+echo -e "\033[0;31m-> Merge \033[0m"
 
 # header + index + reserved + data -> flash.bin
 cat header.bin header.pad index.bin index.pad reserved.bin data.bin > output.fls
@@ -107,7 +117,8 @@ rm -f *.bin *.pad
 # result
 mv output.fls flash.bin
 
-echo "Done"
-
 echo "Total: $total"
+echo -e "\n"
+
+echo -e "\033[0;31mDone!\033[0m"
 
