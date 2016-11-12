@@ -2,29 +2,50 @@
 
 function help {
     echo "Usage:"
-    echo "$0 [path/to/wavs]"
+    echo "$0 [path/to/wavs] [sample rate]"
+    echo "    sample rate = 16000 / 32000 / 44100"
 }
 
 path=$1
+sample_rate=$2
 
-if [[ "$path"x = ""x ]]
+if [[ "$1" == "help" || "$1" == "-h" ]]
+then
+    help
+    exit 0
+fi
+
+if [[ "$path"x == ""x ]]
 then
     path=`pwd`
 fi
 
-if [[ "$path"x = "?"x ]]
-then
-    help
-fi
-
 if [[ ! -d $path ]]
 then
-    echo "Directory not exist!"
+    echo -e "\033[0;33mDirectory not exist!\033[0m"
     help
     exit 1
 fi
 
-help
+if [[ "$sample_rate"x == ""x ]]
+then
+    sample_rate=16000
+fi
+
+if [[ $sample_rate != 16000 && $sample_rate != 32000 && $sample_rate != 44100 ]]
+then
+    echo -e "\033[0;33mInvalid sample rate!\033[0m"
+    help
+    exit 1
+fi
+
+total=`ls -l $path/*.wav | wc -l`
+if [[ $total -eq 0 ]]
+then
+    echo -e "\033[0;33mNot found wav files!\033[0m"
+    help
+    exit 1
+fi
 
 echo -e "\n"
 
