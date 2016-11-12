@@ -3,7 +3,8 @@
 function help {
     echo "Usage:"
     echo "$0 [path/to/wavs] [sample rate]"
-    echo "    sample rate = 16000 / 32000 / 44100"
+    echo "    path/to/wavs (default: current folder)"
+    echo "    sample rate = 16000 / 32000 / 44100 (default: 16000)"
 }
 
 path=$1
@@ -83,7 +84,7 @@ do
     # codec       : pcm_s16le
     # sample rate : 16000 / 32000 / 44100
     # channel     : 1 / 2
-    ffmpeg -y -v warning -i $file -f s16le -acodec pcm_s16le -ar 16000 -ac 1 $file_num.raw
+    ffmpeg -y -v warning -i $file -f s16le -acodec pcm_s16le -ar $sample_rate -ac 1 $file_num.raw
 
     file_size=`ls -l $file_num.raw | awk '{ print $5 }'`
 
