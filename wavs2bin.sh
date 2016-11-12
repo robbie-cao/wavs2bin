@@ -113,7 +113,7 @@ echo -e "\033[0;31m-> Merge \033[0m"
 cat header.bin header.pad index.bin index.pad reserved.bin data.bin > output.fls
 
 # remove tmp intermidates
-rm -f *.bin *.pad
+rm -f *.bin *.pad *.raw
 # result
 mv output.fls flash.bin
 
