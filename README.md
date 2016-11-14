@@ -24,3 +24,11 @@ Dump wav files raw pcm data into one binary with header
 0xNNNNNN00  +----------------+----------------+----------------+----------------+
 
 ```
+
+## Reference
+
+- http://perldoc.perl.org/functions/pack.html
+- http://www.catonmat.net/download/perl.pack.unpack.printf.cheat.sheet.pdf
+- https://github.com/robbie-cao/kb-audio/blob/master/ffmpeg.md#audio-format-conversions
+- https://github.com/robbie-cao/piccolo#convert-audio-file
+- man page of `echo`, `printf`, `cat`, `dd`, `awk`, `sed`, `hexdump`, `ffmpeg`
