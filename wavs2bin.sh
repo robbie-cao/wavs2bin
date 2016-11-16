@@ -128,7 +128,7 @@ do
 
 
     perl -e "print pack(\"LLLL\", ($start_sector, $file_size, 0, $start_addr))" >> index.bin
-    start_sector=$((START_SECT_DATA + sector_size))
+    start_sector=$((start_sector + sector_size))
     start_addr=$((start_sector * 512))
     idx=$((file_num + 1))
 done
