@@ -80,11 +80,17 @@ rm -f *.bin *.pad
 START_ADDR_HEADER=0x0
 START_ADDR_INDEX=0x400
 START_ADDR_RESV=0x80000
-START_ADDR_DATA=0x100000
+START_ADDR_FW=0x100000
+START_ADDR_USRDATA=0x200000
+START_ADDR_MD2SCR=0x300000
+START_ADDR_DATA=0x400000
 
 START_SECT_HEADER=$((START_ADDR_HEADER / 512))
 START_SECT_INDEX=$((START_ADDR_INDEX / 512))
 START_SECT_RESV=$((START_ADDR_RESV / 512))
+START_SECT_FW=$((START_ADDR_FW / 512))
+START_SECT_USRDATA=$((START_ADDR_USRDATA / 512))
+START_SECT_MD2SCR=$((START_ADDR_MD2SCR / 512))
 START_SECT_DATA=$((START_ADDR_DATA / 512))
 
 echo -e "\033[0;31m-> Data Section\033[0m"
@@ -94,6 +100,7 @@ file_num=0
 file_list=`ls $path/*.wav`
 start_sector=$START_SECT_DATA
 start_addr=$START_ADDR_DATA
+
 for file in $file_list
 do
     file_num=`echo $file | awk -F "_" '{ print $2 }' | bc`
@@ -152,20 +159,63 @@ dd if=/dev/zero of=header.pad bs=$padding_size count=1
 echo -e "\033[0;31m-> Reserved Section\033[0m"
 
 # reserved
-dd if=/dev/zero of=reserved.bin bs=$((START_ADDR_DATA - START_ADDR_RESV)) count=1
+dd if=/dev/zero of=reserved.bin bs=$((START_ADDR_FW - START_ADDR_RESV)) count=1
+
+echo -e "\033[0;31m-> FW Section\033[0m"
+
+# fw padding
+fw_size=`ls -l $path/fw.bin | awk '{print $5 }'`
+padding_size=$((START_ADDR_USRDATA - START_ADDR_FW - fw_size))
+echo -e $padding_size
+dd if=/dev/zero of=fw.pad bs=$padding_size count=1
+
+echo -e "\033[0;31m-> User Data Section\033[0m"
+
+# user data
+dd if=/dev/zero of=usrdata.bin bs=$((START_ADDR_MD2SCR - START_ADDR_USRDATA)) count=1
+
+echo -e "\033[0;31m-> Midi2Score Section\033[0m"
+
+# midi2score data
+file_list=`ls $path/*.mid`
+for file in $file_list
+do
+    # midi -> score
+    $path/midi2score $file
+
+    file_size=`ls -l $file.ssc | awk '{ print $5 }'`
+
+    # padding
+    sector_size=$((file_size / 512))
+    tail_size=$((file_size % 512))
+    padding_size=0
+    if [[ $tail_size -ne 0 ]]
+    then
+        sector_size=$((sector_size + 1))
+        padding_size=$((512 - tail_size))
+        dd if=/dev/zero of=$file.pad bs=$padding_size count=1
+        cat $file.ssc $file.pad >> midi2score.bin
+    else
+        cat $file.ssc >> midi2score.bin
+    fi
+done
+
+# midi2score padding
+midi2score_size=`ls -l midi2score.bin | awk '{ print $5 }'`
+padding_size=$((START_ADDR_DATA - START_ADDR_MD2SCR - midi2score_size))
+dd if=/dev/zero of=midi2score.pad bs=$padding_size count=1
 
 echo -e "\033[0;31m-> Merge \033[0m"
 
-# header + index + reserved + data -> flash.bin
-cat header.bin header.pad index.bin index.pad reserved.bin data.bin > output.fls
+# header.bin + header.pad + index.bin + index.pad + reserved.bin + fw.bin + fw.pad  + userdata.bin + midi2score.bin + midi2score.pad + data.bin
+cat header.bin header.pad index.bin index.pad reserved.bin $path/fw.bin fw.pad usrdata.bin midi2score.bin midi2score.pad data.bin > output.fls
 
-# remove tmp intermidates
-rm -f *.bin *.pad *.raw
+#remove tmp intermidates
+rm -f *.bin *.pad *.raw *.ssc
+
 # result
 mv output.fls flash.bin
 
 echo "Total: $total"
 echo -e "\n"
-
 echo -e "\033[0;31mDone!\033[0m"
-
